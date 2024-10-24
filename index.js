@@ -5,7 +5,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const userRoute = require('./Routes/userRoute');
 const friendRoute = require('./Routes/friendRoute');
-const messageRoute = require('./Routes/messageRoute'); // Import messageRoute
+const messageRoute = require('./Routes/messageRoute');
 const path = require('path');
 
 const app = express();
@@ -15,7 +15,7 @@ app.use(express.json());
 app.use(cors());
 app.use("/api/users", userRoute);
 app.use("/api/friends", friendRoute);
-app.use("/api/messages", messageRoute); // Sử dụng messageRoute
+app.use("/api/messages", messageRoute);
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -35,25 +35,22 @@ const io = new Server(server, {
     }
 });
 
-// Kết nối MongoDB
 mongoose.connect(uri)
     .then(() => console.log(`MongoDB connection established`))
     .catch((error) => console.log("MongoDB connection error:", error.message));
 
-// Socket.IO logic
 io.on('connection', (socket) => {
     console.log('A user connected: ' + socket.id);
 
-    socket.on('sendMessage', (messageData) => {
-        io.to(messageData.receiverId).emit('receiveMessage', messageData);
+    socket.on('Gửi tin', (messageData) => {
+        io.to(messageData.receiverId).emit('Nhận tin', messageData);
     });
 
-    socket.on('disconnect', () => {
-        console.log('User disconnected: ' + socket.id);
+    socket.on('Kết nối', () => {
+        console.log('Người dùng mất kết nối: ' + socket.id);
     });
 });
 
-// Lắng nghe cổng server
 server.listen(port, () => {
     console.log(`Server running on port: ${port}`);
 });
