@@ -2,25 +2,19 @@ const Message = require('../Models/messageModel');
 const fs = require('fs');
 const path = require('path');
 
-
 const sendMessage = async (req, res) => {
     const { receiverId, content } = req.body; 
     const senderId = req.user._id;
 
-    let filePath = null;
+    let fileData = null;
 
     if (req.file) {
+        fileData = {
+            data: fs.readFileSync(req.file.path), 
+            contentType: req.file.mimetype
+        };
         
-        const uploadPath = path.join(__dirname, '../uploads/temp', req.file.filename);
-        filePath = `uploads/temp/${req.file.filename}`; 
-        
-        try {
-            
-            await fs.promises.rename(req.file.path, uploadPath); 
-        } catch (error) {
-            console.error('Lỗi khi di chuyển tệp:', error);
-            return res.status(500).json({ message: 'Lỗi khi lưu tệp tin' });
-        }
+        fs.unlinkSync(req.file.path); 
     }
 
     try {
@@ -28,22 +22,19 @@ const sendMessage = async (req, res) => {
             sender: senderId,
             receiver: receiverId,
             content: content || '', 
-            file: filePath 
+            file: fileData 
         });
 
-        
-        if (content || filePath) {
+        if (content || fileData) {
             await messageData.save(); 
             res.status(200).json({ message: 'Tin nhắn đã được gửi thành công', messageData });
         } else {
             return res.status(400).json({ message: 'Không có nội dung để gửi' });
         }
     } catch (error) {
-        res.status(500).json({ message: 'Có lỗi xảy ra nè', error: error.message });
-        console.log(error); 
+        res.status(500).json({ message: 'Có lỗi xảy ra', error: error.message });
     }
 };
-
 
 
 const getMessages = async (req, res) => {
@@ -58,7 +49,20 @@ const getMessages = async (req, res) => {
             ]
         }).sort('timestamp');
 
-        res.status(200).json(messages);
+        const formattedMessages = messages.map(message => {
+            if (message.file && message.file.data) {
+                return {
+                    ...message.toObject(),
+                    file: {
+                        data: message.file.data.toString('base64'), 
+                        contentType: message.file.contentType
+                    }
+                };
+            }
+            return message;
+        });
+
+        res.status(200).json(formattedMessages);
     } catch (error) {
         res.status(500).json({ message: 'Có lỗi xảy ra khi lấy tin nhắn', error: error.message });
     }
