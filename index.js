@@ -15,10 +15,6 @@ app.use(express.json());
 app.use(cors());
 app.use("/api/users", userRoute);
 app.use("/api/friends", friendRoute);
-app.use("/api/messages", messageRoute);
-
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use(express.static(path.join(__dirname, 'public')));
 
 app.get("/", (req, res) => {
     res.send("Hello, World!");
@@ -35,18 +31,21 @@ const io = new Server(server, {
     }
 });
 
+app.use("/api/messages", messageRoute(io));
+
 mongoose.connect(uri)
     .then(() => console.log(`MongoDB connection established`))
     .catch((error) => console.log("MongoDB connection error:", error.message));
 
 io.on('connection', (socket) => {
-    console.log('A user connected: ' + socket.id);
+    console.log('Người dùng kết nối: ' + socket.id);
 
-    socket.on('Gửi tin', (messageData) => {
-        io.to(messageData.receiverId).emit('Nhận tin', messageData);
+    socket.on('sendMessage', (messageData) => {
+        
+        io.to(messageData.receiverId).to(messageData.sender).emit('receiveMessage', messageData);
     });
 
-    socket.on('Kết nối', () => {
+    socket.on('disconnect', () => {
         console.log('Người dùng mất kết nối: ' + socket.id);
     });
 });

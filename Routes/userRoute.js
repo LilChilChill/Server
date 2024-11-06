@@ -12,36 +12,21 @@ const {
 } = require('../Controllers/userController');
 
 const multer = require('multer');
-const path = require('path');
-const fsPromises = require('fs').promises;
 
-const storage = multer.diskStorage({
-    destination: async (req, file, cb) => {
-        const userId = req.user._id.toString();
-        const userDir = path.join(__dirname, '../uploads/Avatars', userId);
+const storage = multer.memoryStorage(); 
+const fileFilter = (req, avatar, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png'];
+    if (!allowedTypes.includes(avatar.mimetype)) {
+        return cb(new Error('Loại file không được chấp nhận'), false);
+    }
+    cb(null, true);
+};
 
-        try {
-            await fsPromises.mkdir(userDir, { recursive: true });
-            cb(null, userDir);
-        } catch (error) {
-            console.error('Error creating user directory:', error);
-            cb(error);
-        }
-    },
-    filename: (req, file, cb) => {
-        const fileTypes = /jpeg|jpg|png|gif/;
-        const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = fileTypes.test(file.mimetype);
-
-        if (extname && mimetype) {
-            cb(null, 'avatar.png');
-        } else {
-            cb(new Error('Định dạng file không hợp lệ.'));
-        }
-    },
+const upload = multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: { fileSize: 5 * 1024 * 1024 }
 });
-
-const upload = multer({ storage });
 
 const router = express.Router();
 router.post('/register', registerUser);

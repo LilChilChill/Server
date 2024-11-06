@@ -79,12 +79,51 @@ const loginUser = async (req, res) => {
 };
 
 
+// const getUserProfile = async (req, res) => {
+//     try {
+//         const user = await userModel.findById(req.user._id).select('-password -friends');
+//         if (!user) return res.status(404).json('Người dùng không tồn tại.');
+
+//         // if (user.avatar && user.avatar.data) {
+//         //     avatar = {
+//         //         data: user.avatar.data.toString('base64'),  
+//         //         contentType: user.avatar.contentType,
+//         //     };
+//         // }
+
+//         // const userProfile = user.map(users => {
+//         //     const userObj = user.toObject()
+//         //     if(user.avatar && user.avatar.data ){
+//         //         userObj.avatar = {
+//         //             data: userObj.avatar.data.toString('base64'),
+//         //             contentType: userObj.avatar.contentType,
+//         //         };
+//         //     }
+//         //     return userObj;
+//         // })
+
+//         res.status(200).json(user);
+//     } catch (error) {
+//         console.log(error);
+//         res.status(500).json({ message: "Đã xảy ra lỗi", error: error.message });
+//     }
+// };
+
 const getUserProfile = async (req, res) => {
     try {
-        const user = await userModel.findById(req.user._id).select('-password');
+        const user = await userModel.findById(req.user._id).select('-password -friends');
         if (!user) return res.status(404).json('Người dùng không tồn tại.');
 
-        res.status(200).json(user);
+        const userProfile = user.toObject();
+        
+        if (userProfile.avatar && userProfile.avatar.data) {
+            userProfile.avatar = {
+                data: userProfile.avatar.data.toString('base64'),
+                contentType: userProfile.avatar.contentType,
+            };
+        }
+
+        res.status(200).json(userProfile);
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Đã xảy ra lỗi", error: error.message });
@@ -92,49 +131,41 @@ const getUserProfile = async (req, res) => {
 };
 
 
+
 const updateUser = async (req, res) => {
-    const userId = req.user._id; 
-    const { name, birthDate, gender } = req.body; 
-    const newAvatar = req.file ? req.file : null; 
+    const userId = req.user._id;
+    const { name, birthDate, gender } = req.body;
+    const newAvatar = req.file
 
     try {
-        
-        const user = await userModel.findById(userId); 
+        const user = await userModel.findById(userId);
         if (!user) return res.status(404).json('Người dùng không tồn tại.');
 
-        
-        const userDir = path.join(__dirname, '../uploads/Avatars', userId.toString());
-        
-        
-        await fsPromises.mkdir(userDir, { recursive: true }); 
-
-        
-        let avatarPath = null;
-        if (newAvatar) {
-            avatarPath = path.join(userDir, 'avatar.png'); 
-            await fsPromises.rename(newAvatar.path, avatarPath); 
-        }
-
-        
         const updateFields = {};
-        if (name) updateFields.name = name; 
+        if (name && name.length >= 3) updateFields.name = name; 
         if (birthDate) updateFields.birthDate = birthDate; 
         if (gender) updateFields.gender = gender; 
 
-        
-        if (avatarPath) {
-            updateFields.avatar = `uploads/Avatars/${userId}/avatar.png`; 
+        if (newAvatar) {
+            updateFields.avatar = {
+                data: newAvatar.buffer,
+                contentType: newAvatar.mimetype,
+            };
         }
 
-        
-        const updatedUser = await userModel.findByIdAndUpdate(userId, updateFields, { new: true, runValidators: true }); 
+        const updatedUser = await userModel.findByIdAndUpdate(
+            userId, 
+            updateFields, 
+            { new: true, runValidators: true }
+        ).select('-password');
 
         res.status(200).json(updatedUser);
     } catch (error) {
-        console.error('Error updating user:', error);
+        console.error('Lỗi khi cập nhật người dùng:', error);
         res.status(500).json({ message: "Đã xảy ra lỗi khi cập nhật thông tin.", error: error.message });
     }
 };
+
 
 
 const getUsers = async (req, res) => {
@@ -170,19 +201,30 @@ const getFriends = async (req, res) => {
     const userId = req.user._id;
 
     try {
-        
         const user = await userModel.findById(userId).populate('friends', 'name avatar');
-        
+
         if (!user) {
             return res.status(404).json({ message: 'Người dùng không tồn tại' });
         }
 
-        res.status(200).json(user.friends); 
+        const friends = user.friends.map(friend => {
+            const friendObj = friend.toObject();
+            if (friend.avatar && friend.avatar.data) {
+                friendObj.avatar = {
+                    data: friend.avatar.data.toString('base64'), 
+                    contentType: friend.avatar.contentType
+                };
+            }
+            return friendObj;
+        });
+
+        res.status(200).json(friends); 
     } catch (err) {
         console.error('Lỗi khi lấy danh sách bạn bè:', err); 
         res.status(500).json({ message: 'Có lỗi xảy ra khi lấy danh sách bạn bè' });
     }
 };
+
 
 const removeFriend = async (req, res) => {
     const friendId = req.params.friendId; 

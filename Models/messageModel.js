@@ -5,7 +5,7 @@ const messageSchema = new mongoose.Schema({
     receiver: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     content: { type: String, required: true },
     file: { data: Buffer, contentType: String },
-    isRead: { type: Boolean, default: false }, // Thêm flag cho tin nhắn đã đọc
+    isRead: { type: Boolean, default: false },
     timestamp: { type: Date, default: Date.now }
 });
 

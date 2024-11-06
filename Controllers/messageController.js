@@ -2,20 +2,14 @@ const Message = require('../Models/messageModel');
 const fs = require('fs');
 const path = require('path');
 
-const sendMessage = async (req, res) => {
+const sendMessage = (io) => async (req, res) => {
     const { receiverId, content } = req.body; 
     const senderId = req.user._id;
-
-    if (!receiverId) {
-        return res.status(400).json({ message: 'receiverId là bắt buộc' });
-    }
-
     let fileData = null;
 
-    // Kiểm tra nếu có tệp tin
     if (req.file) {
         fileData = {
-            data: req.file.buffer, // Sử dụng buffer trực tiếp
+            data: req.file.buffer,
             contentType: req.file.mimetype
         };
     }
@@ -30,11 +24,15 @@ const sendMessage = async (req, res) => {
 
         if (content || fileData) {
             await messageData.save(); 
-            // Trả về dữ liệu tin nhắn đã gửi, bao gồm tệp nếu có
-            res.status(200).json({ message: 'Tin nhắn đã được gửi thành công', messageData: {
+
+            io.to(receiverId).emit('receiveMessage', {
+                senderId,
+                receiverId,
                 content: messageData.content,
-                file: fileData // Chuyển đổi tệp tin về dạng base64 sau này
-            }});
+                file: messageData.file
+            });
+
+            res.status(200).json({ message: 'Tin nhắn đã được gửi thành công', messageData });
         } else {
             return res.status(400).json({ message: 'Không có nội dung để gửi' });
         }
@@ -48,8 +46,8 @@ const sendMessage = async (req, res) => {
 const getMessages = async (req, res) => {
     const userId = req.user._id;
     const friendId = req.params.friendId;
-    const limit = parseInt(req.query.limit) || 20; // Số tin nhắn tối đa mỗi lần
-    const page = parseInt(req.query.page) || 1; // Trang hiện tại
+    const limit = parseInt(req.query.limit) || 50; 
+    const page = parseInt(req.query.page) || 1; 
     const skip = (page - 1) * limit;
 
     try {
@@ -59,10 +57,10 @@ const getMessages = async (req, res) => {
                 { sender: friendId, receiver: userId }
             ]
         })
-        .sort('timestamp')
-        .skip(skip)
-        .limit(limit)
-        .select('sender receiver content file timestamp'); // Chỉ lấy các trường cần thiết
+        // .sort('timestamp')
+        // .skip(skip)
+        // .limit(limit)
+        // .select('sender receiver content file timestamp');
 
         const formattedMessages = messages.map(message => {
             if (message.file && message.file.data) {

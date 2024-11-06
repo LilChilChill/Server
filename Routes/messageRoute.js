@@ -3,7 +3,7 @@ const { sendMessage, getMessages, deleteChatHistory } = require('../Controllers/
 const { authMiddleware } = require('../Controllers/userController');
 const multer = require('multer');
 
-const storage = multer.memoryStorage(); // Sử dụng bộ nhớ để lưu tệp tin tạm thời
+const storage = multer.memoryStorage(); 
 
 const fileFilter = (req, file, cb) => {
     const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
@@ -17,13 +17,18 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ 
     storage: storage,
     fileFilter: fileFilter,
-    limits: { fileSize: 5 * 1024 * 1024 } // Giới hạn kích thước tệp tin
+    limits: { fileSize: 5 * 1024 * 1024 } 
 });
 
 const router = express.Router();
 
-router.post('/', authMiddleware, upload.single('file'), sendMessage); 
-router.get('/:friendId', authMiddleware, getMessages); 
-router.delete('/delete/:friendId', authMiddleware, deleteChatHistory); 
 
-module.exports = router;
+const messageRoute = (io) => {
+    router.post('/', authMiddleware, upload.single('file'), (req, res) => sendMessage(io)(req, res)); 
+    router.get('/:friendId', authMiddleware, getMessages); 
+    router.delete('/delete/:friendId', authMiddleware, deleteChatHistory); 
+
+    return router; 
+};
+
+module.exports = messageRoute;
