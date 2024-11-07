@@ -46,7 +46,7 @@ const sendMessage = (io) => async (req, res) => {
 const getMessages = async (req, res) => {
     const userId = req.user._id;
     const friendId = req.params.friendId;
-    const limit = parseInt(req.query.limit) || 50; 
+    const limit = parseInt(req.query.limit) || 100; 
     const page = parseInt(req.query.page) || 1; 
     const skip = (page - 1) * limit;
 
@@ -57,10 +57,10 @@ const getMessages = async (req, res) => {
                 { sender: friendId, receiver: userId }
             ]
         })
-        // .sort('timestamp')
-        // .skip(skip)
-        // .limit(limit)
-        // .select('sender receiver content file timestamp');
+        .sort('timestamp')
+        .skip(skip)
+        .limit(limit)
+        .select('sender receiver content file timestamp');
 
         const formattedMessages = messages.map(message => {
             if (message.file && message.file.data) {
