@@ -46,7 +46,7 @@ const sendMessage = (io) => async (req, res) => {
 const getMessages = async (req, res) => {
     const userId = req.user._id;
     const friendId = req.params.friendId;
-    const limit = parseInt(req.query.limit) || 100; 
+    const limit = parseInt(req.query.limit) || 100   ; 
     const page = parseInt(req.query.page) || 1; 
     const skip = (page - 1) * limit;
 
