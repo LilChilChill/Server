@@ -7,6 +7,7 @@ const userRoute = require('./Routes/userRoute');
 const friendRoute = require('./Routes/friendRoute');
 const messageRoute = require('./Routes/messageRoute');
 const path = require('path');
+const socketHandler = require('./socket'); // Xử lý socket trong file riêng
 
 const app = express();
 require('dotenv').config();
@@ -27,28 +28,19 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
     cors: {
-        origin: '*',
+        origin: '*', // Cho phép tất cả các nguồn
     }
 });
 
+// Đảm bảo rằng messageRoute nhận được io (server socket)
 app.use("/api/messages", messageRoute(io));
 
 mongoose.connect(uri)
     .then(() => console.log(`MongoDB connection established`))
     .catch((error) => console.log("MongoDB connection error:", error.message));
 
-io.on('connection', (socket) => {
-    console.log('Người dùng kết nối: ' + socket.id);
-
-    socket.on('sendMessage', (messageData) => {
-        
-        io.to(messageData.receiverId).to(messageData.sender).emit('receiveMessage', messageData);
-    });
-
-    socket.on('disconnect', () => {
-        console.log('Người dùng mất kết nối: ' + socket.id);
-    });
-});
+// Gọi hàm xử lý socket sau khi tạo socket server
+socketHandler(io);
 
 server.listen(port, () => {
     console.log(`Server running on port: ${port}`);
