@@ -79,36 +79,6 @@ const loginUser = async (req, res) => {
 };
 
 
-// const getUserProfile = async (req, res) => {
-//     try {
-//         const user = await userModel.findById(req.user._id).select('-password -friends');
-//         if (!user) return res.status(404).json('Người dùng không tồn tại.');
-
-//         // if (user.avatar && user.avatar.data) {
-//         //     avatar = {
-//         //         data: user.avatar.data.toString('base64'),  
-//         //         contentType: user.avatar.contentType,
-//         //     };
-//         // }
-
-//         // const userProfile = user.map(users => {
-//         //     const userObj = user.toObject()
-//         //     if(user.avatar && user.avatar.data ){
-//         //         userObj.avatar = {
-//         //             data: userObj.avatar.data.toString('base64'),
-//         //             contentType: userObj.avatar.contentType,
-//         //         };
-//         //     }
-//         //     return userObj;
-//         // })
-
-//         res.status(200).json(user);
-//     } catch (error) {
-//         console.log(error);
-//         res.status(500).json({ message: "Đã xảy ra lỗi", error: error.message });
-//     }
-// };
-
 const getUserProfile = async (req, res) => {
     try {
         const user = await userModel.findById(req.user._id).select('-password -friends');

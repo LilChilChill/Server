@@ -1,5 +1,5 @@
 const express = require('express');
-const { sendMessage, getMessages, deleteChatHistory } = require('../Controllers/messageController');
+const { sendMessage, getMessages, deleteChatHistory, getSingleChat } = require('../Controllers/messageController');
 const { authMiddleware } = require('../Controllers/userController');
 const multer = require('multer');
 
@@ -27,7 +27,7 @@ const messageRoute = (io) => {
     router.post('/', authMiddleware, upload.single('file'), (req, res) => sendMessage(io)(req, res)); 
     router.get('/:friendId', authMiddleware, getMessages); 
     router.delete('/delete/:friendId', authMiddleware, deleteChatHistory); 
-
+    router.get('/getChat/:id', authMiddleware, getSingleChat);
     return router; 
 };
 

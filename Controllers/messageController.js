@@ -1,6 +1,8 @@
 const Message = require('../Models/messageModel');
 const fs = require('fs');
 const path = require('path');
+const messageModel = require('../Models/messageModel');
+
 
 const sendMessage = (io) => async (req, res) => {
     const { receiverId, content } = req.body; 
@@ -46,7 +48,7 @@ const sendMessage = (io) => async (req, res) => {
 const getMessages = async (req, res) => {
     const userId = req.user._id;
     const friendId = req.params.friendId;
-    const limit = parseInt(req.query.limit) || 10;  
+    const limit = parseInt(req.query.limit) || 20;  
     const page = parseInt(req.query.page) || 1;
     const skip = (page - 1) * limit;
 
@@ -107,4 +109,26 @@ const deleteChatHistory = async (req, res) => {
     }
 };
 
-module.exports = { sendMessage, getMessages, deleteChatHistory };
+const deleteSingleChat = async (req, res) => {
+    try{
+
+    } 
+    catch(error) {
+        console.error('Lỗi khi xóa lịch sử chat:', error);
+        res.status(500).json({ message: 'Lỗi khi xóa lịch sử chat', error: error.message });
+    }
+}
+
+const getSingleChat = async (req, res) => {
+    const chatId = req.sessage._id
+    try {
+        const chat = await messageModel.find(chatId)
+        res.status(200).json(chat)
+        console.log("Chat Id: " + chatId)
+    } catch(error){
+        console.error(error)
+        res.status(500).json({ message: 'Lỗi khi lấy lịch sử chat:', error: error.message });
+    }
+}
+
+module.exports = { sendMessage, getMessages, deleteChatHistory, getSingleChat };
