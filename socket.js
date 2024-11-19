@@ -32,6 +32,16 @@ module.exports = (io) => {
         });
 
         socket.on('sendMessage', async (messageData) => {
+            const date = new Date();
+            let hours = date.getHours();
+            let miniutes = date.getMinutes();
+            if (+hours <= 9) {
+                hours = `0${hours}`;
+            }
+            if (+miniutes <= 9) {
+                miniutes = `0${hours}`;
+            }
+            messageData.date = `${hours}:${miniutes}`;
             const { chatType, receiverId, groupId, sender, content, file } = messageData;
 
             if (chatType === 'group') {
@@ -42,8 +52,10 @@ module.exports = (io) => {
                 if (receiverSocketId) {
                     io.to(receiverSocketId).emit('receiveMessage', messageData);
                     console.log(`Gửi tin nhắn từ ${sender} đến ${receiverId}`);
+                    console.log('Message Date', messageData)
                 } else {
                     console.log(`Người dùng ${receiverId} hiện không online.`);
+                    console.log('Message Date', messageData)
                 }
             }
         });
