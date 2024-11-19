@@ -6,6 +6,7 @@ const { Server } = require('socket.io');
 const userRoute = require('./Routes/userRoute');
 const friendRoute = require('./Routes/friendRoute');
 const messageRoute = require('./Routes/messageRoute');
+const groupRoute = require('./Routes/groupRoute')
 const path = require('path');
 const socketHandler = require('./socket');
 
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use(cors());
 app.use("/api/users", userRoute);
 app.use("/api/friends", friendRoute);
+app.use("/api/groups", groupRoute);
 
 app.get("/", (req, res) => {
     res.send("Hello, World!");
