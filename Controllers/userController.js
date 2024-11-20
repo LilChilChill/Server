@@ -171,14 +171,6 @@ const searchUsers = async (req, res) => {
             }
             return user
         })
-        // const friends = users.toObject();
-
-        // if (friends.avatar && friends.avatar.data) {
-        //     friends.avatar = {
-        //         data: friends.avatar.data.toString('base64'),
-        //         contentType: friends.avatar.contentType,
-        //     };
-        // }
 
         res.status(200).json(formattedFriends);
         console.log("thanh cong", formattedFriends)

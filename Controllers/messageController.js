@@ -1,7 +1,6 @@
 const Message = require('../Models/messageModel');
 const fs = require('fs');
 const path = require('path');
-const messageModel = require('../Models/messageModel');
 
 
 const sendMessage = (io) => async (req, res) => {
@@ -48,6 +47,7 @@ const sendMessage = (io) => async (req, res) => {
             });
 
             res.status(200).json({ message: 'Tin nhắn đã được gửi thành công', messageData });
+            console.log("success message: ", messageData);
             console.log('time', date)
         } else {
             return res.status(400).json({ message: 'Không có nội dung để gửi' });
@@ -65,18 +65,7 @@ const getMessages = async (req, res) => {
     const limit = parseInt(req.query.limit) || 15;  
     const page = parseInt(req.query.page) || 1;
     const skip = (page - 1) * limit;
-
-    let date = new Date();
-    let hours = date.getHours();
-    let miniutes = date.getMinutes();
-    if (+hours <= 9) {
-        hours = `0${hours}`;
-    }
-    if (+miniutes <= 9) {
-        miniutes = `0${hours}`;
-    }
-    date = `${hours}:${miniutes}`;
-
+    
     try {
         const messages = await Message.find({
             $or: [
@@ -97,13 +86,18 @@ const getMessages = async (req, res) => {
                         data: message.file.data.toString('base64'), 
                         contentType: message.file.contentType
                     },
-                    date
                 };
+            }
+            else {
+                return {
+                    ...message.toObject(),
+                }
             }
             return message;
         });
 
         res.status(200).json(formattedMessages);
+        console.log('messages:', formattedMessages);
     } catch (error) {
         res.status(500).json({ message: 'Có lỗi xảy ra khi lấy tin nhắn', error: error.message });
     }
@@ -148,7 +142,7 @@ const deleteSingleChat = async (req, res) => {
 const getSingleChat = async (req, res) => {
     const chatId = req.sessage._id
     try {
-        const chat = await messageModel.find(chatId)
+        const chat = await Message.find(chatId)
         res.status(200).json(chat)
         console.log("Chat Id: " + chatId)
     } catch(error){
