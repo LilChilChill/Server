@@ -159,7 +159,29 @@ const searchUsers = async (req, res) => {
             ]
         }).select('-password -friends'); 
 
-        res.status(200).json(users);
+        const formattedFriends = users.map(user =>{
+            if(user.avatar && user.avatar.data) {
+                return {
+                    ...user.toObject(),
+                    avatar: {
+                        data: user.avatar.data.toString('base64'), 
+                        contentType: user.avatar.contentType,
+                    }
+                }
+            }
+            return user
+        })
+        // const friends = users.toObject();
+
+        // if (friends.avatar && friends.avatar.data) {
+        //     friends.avatar = {
+        //         data: friends.avatar.data.toString('base64'),
+        //         contentType: friends.avatar.contentType,
+        //     };
+        // }
+
+        res.status(200).json(formattedFriends);
+        console.log("thanh cong", formattedFriends)
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: 'Đã xảy ra lỗi khi tìm kiếm người dùng.', error: error.message });

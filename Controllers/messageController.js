@@ -9,6 +9,17 @@ const sendMessage = (io) => async (req, res) => {
     const senderId = req.user._id;
     let fileData = null;
 
+    let date = new Date();
+    let hours = date.getHours();
+    let miniutes = date.getMinutes();
+    if (+hours <= 9) {
+        hours = `0${hours}`;
+    }
+    if (+miniutes <= 9) {
+        miniutes = `0${hours}`;
+    }
+    date = `${hours}:${miniutes}`;
+
     if (req.file) {
         fileData = {
             data: req.file.buffer,
@@ -21,7 +32,8 @@ const sendMessage = (io) => async (req, res) => {
             sender: senderId,
             receiver: receiverId,
             content: content || '', 
-            file: fileData 
+            file: fileData,
+            date: date
         });
 
         if (content || fileData) {
@@ -31,10 +43,12 @@ const sendMessage = (io) => async (req, res) => {
                 senderId,
                 receiverId,
                 content: messageData.content,
-                file: messageData.file
+                file: messageData.file,
+                date
             });
 
             res.status(200).json({ message: 'Tin nhắn đã được gửi thành công', messageData });
+            console.log('time', date)
         } else {
             return res.status(400).json({ message: 'Không có nội dung để gửi' });
         }
@@ -51,6 +65,17 @@ const getMessages = async (req, res) => {
     const limit = parseInt(req.query.limit) || 15;  
     const page = parseInt(req.query.page) || 1;
     const skip = (page - 1) * limit;
+
+    let date = new Date();
+    let hours = date.getHours();
+    let miniutes = date.getMinutes();
+    if (+hours <= 9) {
+        hours = `0${hours}`;
+    }
+    if (+miniutes <= 9) {
+        miniutes = `0${hours}`;
+    }
+    date = `${hours}:${miniutes}`;
 
     try {
         const messages = await Message.find({
@@ -71,7 +96,8 @@ const getMessages = async (req, res) => {
                     file: {
                         data: message.file.data.toString('base64'), 
                         contentType: message.file.contentType
-                    }
+                    },
+                    date
                 };
             }
             return message;
