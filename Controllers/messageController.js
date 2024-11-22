@@ -76,7 +76,7 @@ const getMessages = async (req, res) => {
         .sort('-timestamp')  
         .skip(skip)
         .limit(limit)
-        .select('sender receiver content file timestamp');
+        .select('sender receiver content file date timestamp isRead');
 
         const formattedMessages = messages.reverse().map(message => {  
             if (message.file && message.file.data) {
@@ -87,11 +87,6 @@ const getMessages = async (req, res) => {
                         contentType: message.file.contentType
                     },
                 };
-            }
-            else {
-                return {
-                    ...message.toObject(),
-                }
             }
             return message;
         });

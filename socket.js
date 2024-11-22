@@ -1,3 +1,79 @@
+// module.exports = (io) => {
+//     const users = {}; 
+//     const groups = {};
+
+//     io.on('connection', (socket) => {
+//         console.log('Người dùng kết nối: ' + socket.id);
+
+//         socket.on('register', (userId) => {
+//             users[userId] = socket.id;
+//             console.log(`User ${userId} đã đăng ký với socket ID: ${socket.id}`);
+//         });
+
+//         socket.on('joinGroup', ({ userId, groupId }) => {
+//             users[userId] = socket.id;
+//             socket.join(groupId); 
+//             if (!groups[groupId]) {
+//                 groups[groupId] = [];
+//             }
+//             if (!groups[groupId].includes(userId)) {
+//                 groups[groupId].push(userId);
+//             }
+//             console.log(`User ${userId} đã tham gia group ${groupId}`);
+//         });
+
+
+//         socket.on('leaveGroup', ({ userId, groupId }) => {
+//             socket.leave(groupId); 
+//             if (groups[groupId]) {
+//                 groups[groupId] = groups[groupId].filter((id) => id !== userId);
+//                 console.log(`User ${userId} đã rời group ${groupId}`);
+//             }
+//         });
+
+//         socket.on('sendMessage', async (messageData) => {
+//             const date = new Date();
+//             let hours = date.getHours();
+//             let miniutes = date.getMinutes();
+//             if (+hours <= 9) {
+//                 hours = `0${hours}`;
+//             }
+//             if (+miniutes <= 9) {
+//                 miniutes = `0${miniutes}`;
+//             }
+//             messageData.date = `${hours}:${miniutes}`;
+//             const { chatType, receiverId, groupId, sender, content, file } = messageData;
+
+//             if (chatType === 'group') {
+//                 console.log(`Gửi tin nhắn đến group ${groupId}`);
+//                 io.to(groupId).emit('receiveMessage', messageData);
+//             } else if (chatType === 'private') {
+//                 const receiverSocketId = users[receiverId];
+//                 if (receiverSocketId) {
+//                     io.to(receiverSocketId).emit('receiveMessage', messageData);
+//                     console.log(`Gửi tin nhắn từ ${sender} đến ${receiverId}`);
+//                     console.log('Message Date', messageData)
+//                 } else {
+//                     console.log(`Người dùng ${receiverId} hiện không online.`);
+//                     console.log('Message Date', messageData)
+//                 }
+//             }
+//         });
+
+//         socket.on('disconnect', () => {
+//             console.log('Người dùng mất kết nối: ' + socket.id);
+//             for (const userId in users) {
+//                 if (users[userId] === socket.id) {
+//                     delete users[userId];
+//                     console.log(`User ${userId} đã ngắt kết nối.`);
+//                     break;
+//                 }
+//             }
+//         });
+//     });
+// };
+
+
 module.exports = (io) => {
     const users = {}; 
     const groups = {};
@@ -5,11 +81,13 @@ module.exports = (io) => {
     io.on('connection', (socket) => {
         console.log('Người dùng kết nối: ' + socket.id);
 
+        // Đăng ký người dùng
         socket.on('register', (userId) => {
             users[userId] = socket.id;
             console.log(`User ${userId} đã đăng ký với socket ID: ${socket.id}`);
         });
 
+        // Người dùng tham gia nhóm
         socket.on('joinGroup', ({ userId, groupId }) => {
             users[userId] = socket.id;
             socket.join(groupId); 
@@ -22,7 +100,7 @@ module.exports = (io) => {
             console.log(`User ${userId} đã tham gia group ${groupId}`);
         });
 
-
+        // Người dùng rời nhóm
         socket.on('leaveGroup', ({ userId, groupId }) => {
             socket.leave(groupId); 
             if (groups[groupId]) {
@@ -31,20 +109,35 @@ module.exports = (io) => {
             }
         });
 
+        // Gửi tin nhắn
         socket.on('sendMessage', async (messageData) => {
             const date = new Date();
             let hours = date.getHours();
             let miniutes = date.getMinutes();
+            
+            // Đảm bảo giờ và phút luôn có 2 chữ số
             if (+hours <= 9) {
                 hours = `0${hours}`;
             }
             if (+miniutes <= 9) {
-                miniutes = `0${hours}`;
+                miniutes = `0${miniutes}`;
             }
             messageData.date = `${hours}:${miniutes}`;
+            
             const { chatType, receiverId, groupId, sender, content, file } = messageData;
 
+            // Kiểm tra loại tin nhắn
+            if (!['group', 'private'].includes(chatType)) {
+                console.log(`Loại tin nhắn không hợp lệ: ${chatType}`);
+                return;
+            }
+
+            // Kiểm tra quyền truy cập nhóm khi gửi tin nhắn
             if (chatType === 'group') {
+                if (!groups[groupId] || !groups[groupId].includes(sender)) {
+                    console.log(`User ${sender} không thuộc group ${groupId}`);
+                    return;
+                }
                 console.log(`Gửi tin nhắn đến group ${groupId}`);
                 io.to(groupId).emit('receiveMessage', messageData);
             } else if (chatType === 'private') {
@@ -52,20 +145,25 @@ module.exports = (io) => {
                 if (receiverSocketId) {
                     io.to(receiverSocketId).emit('receiveMessage', messageData);
                     console.log(`Gửi tin nhắn từ ${sender} đến ${receiverId}`);
-                    console.log('Message Date', messageData)
+                    console.log('Message Date', messageData);
                 } else {
                     console.log(`Người dùng ${receiverId} hiện không online.`);
-                    console.log('Message Date', messageData)
+                    console.log('Message Date', messageData);
                 }
             }
         });
 
+        // Khi người dùng mất kết nối
         socket.on('disconnect', () => {
             console.log('Người dùng mất kết nối: ' + socket.id);
             for (const userId in users) {
                 if (users[userId] === socket.id) {
                     delete users[userId];
                     console.log(`User ${userId} đã ngắt kết nối.`);
+                    // Xóa người dùng khỏi tất cả các group họ đang tham gia
+                    for (const groupId in groups) {
+                        groups[groupId] = groups[groupId].filter((id) => id !== userId);
+                    }
                     break;
                 }
             }

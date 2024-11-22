@@ -12,7 +12,7 @@ router.post('/create', authMiddleware, createGroup);
 
 router.get('/:userId', authMiddleware, getUserGroups);
 
-router.post('/:groupId/message', authMiddleware, sendMessage);
+router.post('/:groupId/messages', authMiddleware, sendMessage);
 
 router.get('/:groupId/messages', authMiddleware, getGroupMessages);
 
