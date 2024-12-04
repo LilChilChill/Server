@@ -15,7 +15,7 @@ const sendMessage = (io) => async (req, res) => {
         hours = `0${hours}`;
     }
     if (+miniutes <= 9) {
-        miniutes = `0${hours}`;
+        miniutes = `0${miniutes}`;
     }
     date = `${hours}:${miniutes}`;
 
