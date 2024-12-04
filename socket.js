@@ -75,6 +75,9 @@ module.exports = (io) => {
             }
         });
 
+        socket.on('signal', (data) => {
+            socket.broadcast.emit('signal', data);
+        });
         
         socket.on('disconnect', () => {
             console.log('Người dùng mất kết nối: ' + socket.id);
